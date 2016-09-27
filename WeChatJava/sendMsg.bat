@@ -1,2 +1,2 @@
-@echo on
-"..\jre\bin\java" -cp .;lib\* Messager @all %*
+@echo off
+"..\jre\bin\java" -cp .;lib/* Messager @all %*

@@ -1,7 +1,7 @@
 
 ### Usage:
 1. set up your detail in config.properties
-2. run it by "java -cp .;lib\* Messager @all yourMessage"
+2. usage: "java -cp .;lib\* Messager @all yourMessage"
 
 
 
