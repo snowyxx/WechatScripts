@@ -4,9 +4,10 @@
 - set up your detail in config.properties
 	- MsgTemplateId:  your template id of OPENTM207112010
 - usage
-	- java -cp .;lib/* Messager <@all> <Your [orther messga]>
-	- java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>
-		> tagNames : "tagname" or "tagename1|tagname2|tagname3". 
+	- __Enterprise Account__ `java -cp .;lib/* Messager \<@all> \<Your [orther messga]>`
+	- __Service/Subscribe Account__ `java -cp .;lib/* Messager \<tagNames> \<alarmurl> \<severity> \<alertType> \<alertDate> \<device> \<monitorGroup> \<Your [orther messga]>`
+		
+        > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
 
 ---
 

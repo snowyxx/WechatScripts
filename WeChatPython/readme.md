@@ -6,5 +6,5 @@ Python 2.7
 	- MsgTemplateId:  your template id of OPENTM207112010
 	- ToTags: the tag you have allociated to your users
 - usage
-	- python wxmsg.py <Your [orther messga]>
-	- python wxmsg.py <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>
+	- __Enterprise Account__ `python wxmsg.py \<Your [orther messga]>`
+	- __Service/Subscribe Account__  `python wxmsg.py \<alarmurl> \<severity> \<alertType> \<alertDate> \<device> \<monitorGroup> \<Your [orther messga]>`
