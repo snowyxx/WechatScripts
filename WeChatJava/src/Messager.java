@@ -96,7 +96,7 @@ public class Messager {
 		String title = "--- 来自ME产品的运维告警 ---";
 		String color = "#173177";
 		String severityColor=color;
-		if (Arrays.asList(critcal).contains(severity)){
+		if (Arrays.asList(critcal).contains(severity.toLowerCase())){
 			severityColor = "#FF0000";
 		}
 		for (int i=0; i<users.size(); i++){
