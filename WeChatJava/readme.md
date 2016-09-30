@@ -1,10 +1,14 @@
-
 ### Usage:
-1. set up your detail in config.properties
-2. usage: "java -cp .;lib\* Messager @all yourMessage"
 
+- set ACCOUNTTYPE with one of ["service"  "subscribe"  "enterprise"] in config.properties
+- set up your detail in config.properties
+	- MsgTemplateId:  your template id of OPENTM207112010
+- usage
+	- java -cp .;lib/* Messager <@all> <Your [orther messga]>
+	- java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>
+		> tagNames : "tagname" or "tagename1|tagname2|tagname3". 
 
-
+---
 
 JSON lib
 

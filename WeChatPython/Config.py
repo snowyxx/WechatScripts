@@ -13,7 +13,7 @@ AGENTID = 3   # app's id                                              # Enterpri
 # service, subscribe account
 AppID = "Your subscribe/service account's app id" 
 AppSecret = "Your subscribe/service account's secret"
-ToTags = ['ME测试']  # the tag you have allociate to your users
+ToTags = ['ME测试']  # the tag you have allociated to your users
 MsgTemplateId = 'your template id of OPENTM207112010'
 
 
