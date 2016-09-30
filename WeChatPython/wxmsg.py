@@ -90,9 +90,9 @@ class MXMessager():
         '''
         ids = self.getTagIds(access_token, ToTags)
         users = self.getSubTagedUsers(access_token, ids)
-        title = "--- 运维告警 ---"
+        title = "--- 来自ME产品的运维告警 ---"
         url = 'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={0}'.format(access_token)
-        if severity.lower() in ['critical', 'error', 'down', '严重', '严重的', '停止', '错误']:
+        if severity.lower() in ['critical', 'error', 'down', '严重', '严重的', '停止', '服务停止', '错误']:
             severitycolor="#FF0000"
         else:
             severitycolor="#173177"
@@ -171,7 +171,7 @@ if __name__ == '__main__':
             alertDate = args[4]
             device = args[5]
             monitorGroup = args[6]
-            rcaMessage = args[7:]
+            rcaMessage = ' '.join(args[7:])
             messager = MXMessager()
             access_token = messager.getAccessToken()
             result = messager.sendMesg_sub(access_token, msgurl, severity, alertType, alertDate, device, monitorGroup,rcaMessage )
