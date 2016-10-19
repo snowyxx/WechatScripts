@@ -1,0 +1,163 @@
+<html>
+<head>
+    <title>提交工单</title>
+    <meta charset="utf-8">
+    <script src="jquery-1.8.3.min.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript">
+        accountType = "sub"  //-ent- for enterprise account or -sub- for service/subcribe account
+        var APPID = "wx99e16a968xxxxxxxxxxxxxxxxxxcde2d77";   //ME's  subcribe account
+        var REDIRECT_URI = encodeURIComponent("http://yourwebsite/yantest.html");
+        var SCOPE = "snsapi_userinfo";  //snsapi_base   snsapi_userinfo
+        if (accountType == 'sub'){
+            var getCodeUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid='+APPID+'&redirect_uri='+REDIRECT_URI+'&response_type=code&scope='+SCOPE+'&state=123#wechat_redirect';
+        }else{
+            var getCodeUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid='+APPID+'&redirect_uri='+REDIRECT_URI+'&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect';
+        }
+        
+        var code = '';
+        var nickname = 'Unkown User From WeChat';
+        var newOptions = [{"TEMPLATENAME":"Default Request"}];
+        var templateName = "Default Request";
+        
+        if (window.location.href.indexOf("code")==-1){
+            window.location.href=getCodeUrl;
+        } else{
+            code = window.location.href.split('code=')[1].split("&")[0]
+        }
+        
+        $(document).ready(function(){
+            $("#mydiv").append('<span>'+code+'</span><br>')
+            if (code != ''){
+                // use ajax to fetch user name from my wechat server
+                $.get('http://mySite/getnickname?code='+code+'&atype='+accountType, function(data,status){
+                    nickname = data
+                    $("#mydiv").append('<span>'+data+'</span>');
+                });
+            }
+       
+        var httpMethod = 'POST';
+        var path = '/sdpapi/admin/request_template?TECHNICIAN_KEY=BCC6A69E-FE19-4D67-80CE-182C8B429832';
+        var entity = 'Request_V1';
+
+        var ajaxJson = {};
+        ajaxJson.data = {};
+        
+        ajaxJson.data.format = 'json';
+        
+        ajaxJson.data.OPERATION_NAME = 'GET_ALL';
+                
+        ajaxJson.type = httpMethod;
+        ajaxJson.url = 'http://yourSDPAddress:8080' + path;
+
+        ajaxJson.success = function(msg,status,xhr) {
+            newOptions = $.parseJSON(xhr.responseText)["operation"]["details"];
+            var selectedOption = 'Default Request';
+            var select = $("#requesttemplate");
+            if(select.prop) {
+              var options = select.prop('options');
+            }
+            else {
+              var options = select.attr('options');
+            }
+            $('option', select).remove();
+
+            $.each(newOptions, function(index,template) {
+                options[options.length] = new Option(template["TEMPLATENAME"], template["TEMPLATENAME"]);
+            });
+            select.val(selectedOption);
+        };
+        
+        ajaxJson.error =  function(xhr, ajaxOptions, thrownError) {
+            
+                console.log(thrownError);
+            
+        };
+        jQuery.ajax(ajaxJson);
+        
+        $("#requesttemplate").change(function(){
+            $("#des").val($("#requesttemplate").val());
+            templateName = $("#requesttemplate").val();
+        });
+        
+    });
+
+    function addRequest() {
+         
+        var httpMethod = 'POST';
+        var path = '/sdpapi/request?TECHNICIAN_KEY=BCC6A69E-FE19-4D67-80CE-182C8B429832';
+        var entity = 'Request_V1';
+
+        var ajaxJson = {};
+        ajaxJson.data = {};
+        
+        ajaxJson.data.format = 'json';
+        
+        ajaxJson.data.OPERATION_NAME = 'ADD_REQUEST';
+        subject = $("#subject").val() != ""?$("#subject").val():"";
+        des = $("#des").val() != ""?$("#des").val():subject;
+        des =  des.replace(/[\n]/ig,'\\n');
+        var input_data ='{"operation":{"details":{"requester": "'+nickname+'","subject": "'+subject+'", "description": "'+des+'","requesttemplate": "'+templateName+'"}}}';
+        console.log(input_data);
+        ajaxJson.data.INPUT_DATA=input_data;
+        
+        ajaxJson.type = httpMethod;
+        ajaxJson.url = 'http://yourSDPAddress:8080' + path;
+
+        ajaxJson.success = function(msg,status,xhr) {
+
+            console.log(xhr.responseText);
+            result = $.parseJSON(xhr.responseText)["operation"]["result"]
+            if (result['status'] == "Success"){
+                requestid = $.parseJSON(xhr.responseText)["operation"]["Details"]["WORKORDERID"]
+                $("#mydiv").append('<p style="color:green">'+result["message"]+'<br>新的请求ID是：<b>'+requestid+'</b></p>');
+            }else{
+                $("#mydiv").append('<p style="color:red">'+result["message"]+'</p>');
+            }
+            
+        };
+        
+        ajaxJson.error =  function(xhr, ajaxOptions, thrownError) {
+            
+                console.log(thrownError);
+            
+        };
+
+        // ajaxJson.headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8','Accept' : 'vnd.manageengine.v3+json','X-ZCSRF-TOKEN':csrfname+'='+csrfvalue,'If-Modified-Since':'Thu, 1 Jan 1970 00:00:00 GMT'};//No I18N
+        jQuery.ajax(ajaxJson);
+        
+    }
+    </script>
+</head>
+<style>
+    .bigger{
+        padding: 24px 8px;
+        border: 1px solid #e2e2e2;
+        outline: none;
+        font-family: inherit;
+        -webkit-box-shadow: 0px 1px 0 rgb(238, 238, 238);
+        box-shadow: 0px 1px 0 rgb(238, 238, 238);
+        font-size: 20px;
+        width: 98%;
+        margin-bottom: 10px;
+    }
+</style>
+<body>
+     <h1>模板：</h1><br>
+    <select id="requesttemplate" class="bigger">
+        <option value="Default Request">Default Request</option>
+    </select>
+    <br><br>
+    <h1>主题：</h1><br>
+    <input type="text" name="subject" value="" placeholder="输入新主题，留空使用默认值" id="subject" class="bigger">
+    <br><br>
+    <h1>描述：</h1><br>
+    <textarea rows="15" id="des" class="bigger"></textarea>
+    <br><br>
+    <input type="submit" value="添加" onclick="javascript:addRequest()" class="bigger">
+<br><br><br><br>
+<hr>
+<div id="mydiv">
+    
+</div>
+</body>
+</html>

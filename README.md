@@ -9,3 +9,5 @@ Setup config.properties(Java) and Config.py(Python) first.
 __WeChatPython__ - python verson
 
 __WeChatJava__ - java verson
+
+__pages__ - some static page with some features
