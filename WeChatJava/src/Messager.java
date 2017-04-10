@@ -81,7 +81,7 @@ public class Messager {
 	}
 	
 	/*
-	Send message to Enterprise account. Using template OPENTM207112010
+	Send message to Service/Subscribe account. Using template OPENTM207112010
     Used API: https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1433751277&token=&lang=zh_CN
     Used Message Template: https://mp.weixin.qq.com/advanced/tmplmsg?action=tmpl_preview&t=tmplmsg/preview&id=OPENTM207112010&token=713914582&lang=zh_CN
 	*/
