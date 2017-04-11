@@ -42,17 +42,18 @@ public class Messager {
 		this.AppID = prop.getProperty("AppID").trim();
 		this.AppSecret = prop.getProperty("AppSecret").trim();
 		this.MsgTemplateId = prop.getProperty("MsgTemplateId").trim();
+		System.out.println("[-] New Messager created with account type: " + Messager.accountType);
 	}
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length<2){
-			System.out.println("Your input was not correct. Please check the readme");
+			System.out.println("[!] Your input was not correct. Please check the readme");
 			System.exit(999);
 		}
 		Messager msg = new Messager("conf.properties");
 		String token = msg.fetchToken();
 		StringBuffer sb = new StringBuffer();
-		if ("service".equals(accountType)||"subscribe".equals(accountType)){
+		if ("service".equals(accountType)){
 			String tagNames = args[0];
 			String alarmurl = args[1];
 			String severity = args[2];
@@ -66,7 +67,7 @@ public class Messager {
 			String rcaMessage = sb.toString().trim();
 			
 			String result = msg.sendMsg_sub(token,tagNames, alarmurl,severity,alertType,alertDate,device,monitorGroup,rcaMessage);
-			System.out.println(result);
+			System.out.println("[*] send message to service account result: "+result);
 		}else if("enterprise".equals(accountType)){
 			String toUser = args[0];
 			for (int i=1;i<args.length;i++){
@@ -74,22 +75,24 @@ public class Messager {
 			}
 			String content = sb.toString().trim();
 			String result = msg.sendMsg_ent(token,toUser, content);
-			System.out.println(result);
+			System.out.println("[*] send message to enterprise account result: "+result);
+		}else if("subscribe".equals(accountType)){
+			System.out.println("[!] subscribe account type is not supportted.");
 		}else{
-			System.out.println("[!] Your account type is not correct. It should be one of service, subscribe,enterprise");
+			System.out.println("[!] Your account type is not correct. It should be one of service, enterprise");
 		}
 	}
 	
+
 	/*
-	Send message to Service/Subscribe account. Using template OPENTM207112010
+	Send message to Enterprise account. Using template OPENTM207112010
     Used API: https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1433751277&token=&lang=zh_CN
     Used Message Template: https://mp.weixin.qq.com/advanced/tmplmsg?action=tmpl_preview&t=tmplmsg/preview&id=OPENTM207112010&token=713914582&lang=zh_CN
 	*/
 	private String sendMsg_sub(String token, String tagNames, String alarmurl, String severity,
 			String alertType, String alertDate, String device, String monitorGroup, String rcaMessage) throws Exception {
 		
-		ArrayList<Integer> ids = this.getTagIds(token, tagNames);
-		ArrayList<String> users = this.getUsers(token,ids);
+		ArrayList<String> users = this.fetchServieUserIds(token, tagNames);
 		StringBuffer result = new StringBuffer();
 		String url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token="+token;
 		String[] critcal = {"critical", "error", "down", "严重", "严重的", "停止", "错误", "服务停止"};
@@ -99,6 +102,7 @@ public class Messager {
 		if (Arrays.asList(critcal).contains(severity.toLowerCase())){
 			severityColor = "#FF0000";
 		}
+		System.out.println("[*] Be going to send message to "+users.size()+" users." );
 		for (int i=0; i<users.size(); i++){
 			String user = users.get(i);
 			JSONObject postdata = new JSONObject();
@@ -146,7 +150,7 @@ public class Messager {
 			postdata.put("data", data);
 			
 			String datastr = postdata.toString();
-			System.out.println(datastr);
+			System.out.println("[-] message template post data is \n"+datastr);
 			result.append(postRequestWithString(url, datastr));
 		}
 
@@ -167,6 +171,7 @@ public class Messager {
     		postdata.put("next_openid", "");
     		String data = postdata.toString();
     		String postResponse = postRequestWithString(url, data);
+    		System.out.println("[-] get taged users API response is:\n"+postResponse);
     		// {"count":2,"data":{"openid":["osQhiuOAGCM96q6e8gAkTFpHf_60","osQhiuHgVRrK5ciDxVvk17OEU66Q"]},"next_openid":"osQhiuHgVRrK5ciDxVvk17OEU66Q"}
     		JSONObject resobj = new JSONObject(postResponse);
     		JSONObject dataobj = (JSONObject) resobj.get("data");
@@ -190,14 +195,16 @@ public class Messager {
 		ArrayList<Integer> ids = new ArrayList<Integer>();
 		String names[];
 		if (tagNames.indexOf("|")!=-1){
-			names = tagNames.split("|");
+			names = tagNames.split("\\|");
 		}else{
 			names = new String[1];
 			names[0]=tagNames;
 		}
 		List<String> namelist = Arrays.asList(names);
+		System.out.println("[-] get the tag ids of tag names: "+namelist);
 		String url = "https://api.weixin.qq.com/cgi-bin/tags/get?access_token="+token;
 		String tagResponse = getRequest(url);
+		System.out.println("[-] Get tage name id API response:\n"+tagResponse);
 		JSONObject jobj = new JSONObject(tagResponse);
 		//{"tags":[{"id":2,"name":"星标组","count":0},{"id":100,"name":"ME测试","count":1},{"id":102,"name":"ME支持","count":0}]}
 		JSONArray tagArray = jobj.getJSONArray("tags");
@@ -209,7 +216,6 @@ public class Messager {
 				ids.add((Integer) ob.get("id"));
 			}
 		}
-		//TODO: get the tag ids from JSONArray and name list
 		return ids;
 	}
 
@@ -227,7 +233,7 @@ public class Messager {
 		data.put("text", contentObj);
 		data.put("safe",0);
 		String dataStr = data.toString();
-		System.out.println(dataStr);
+		System.out.println("[-] Enterprise account message sending post data:\n"+dataStr);
 		String reslut = postRequestWithString(url, dataStr);
 		return reslut;
 	}
@@ -264,7 +270,7 @@ public class Messager {
 		} catch (Exception e1) {
 			return null;
 		}
-		System.out.println(getTokenRes);
+		System.out.println("[-] get token API response:\n"+getTokenRes);
 		JSONObject jobj = new JSONObject(getTokenRes);
 		token =jobj.getString("access_token");
 		expires =jobj.getInt("expires_in");
@@ -276,6 +282,47 @@ public class Messager {
 		prop.store(new FileOutputStream("st.properties"), "store the new access kenston");	
 		return token;
 	}
+	
+	private ArrayList<String> fetchServieUserIds(String token, String tagNames) throws Exception{
+		Properties prop = new Properties();
+		Long time;
+		String serviceUsers;
+		ArrayList<String> users;
+		try{
+			prop.load(new FileInputStream("st.properties"));
+			serviceUsers = prop.getProperty("serviceUsers");
+			time = Long.valueOf(prop.getProperty("serviceUsersUpdateTime"));
+			if (System.currentTimeMillis()/1000 < (time/1000+3600*4)){
+				if (serviceUsers.indexOf("|")!=-1){
+					String[] ss = serviceUsers.split("\\|");
+					users = new ArrayList<String>(Arrays.asList(ss));
+				}else{
+					users = new ArrayList<String>();
+					users.add(serviceUsers);
+				}
+				return users;
+			}
+		}catch (Exception e){
+			
+		}
+		
+		ArrayList<Integer> ids = this.getTagIds(token, tagNames);
+		users = this.getUsers(token,ids);
+		StringBuffer sb = new StringBuffer();
+		for(int i=0;i<users.size();i++){
+			sb.append(users.get(i)+"|");
+		}
+		String unames = sb.toString();
+		if (unames.endsWith("|")){
+			unames = unames.substring(0, unames.length()-1);
+		}
+		time = System.currentTimeMillis();
+		prop.setProperty("serviceUsers", unames);
+		prop.setProperty("serviceUsersUpdateTime", String.valueOf(time));
+		prop.store(new FileOutputStream("st.properties"), "store the new taged name ids");
+		return users;
+	}
+	
 	public static String getRequest(String url) throws Exception{
 		String result="";
 		CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -313,11 +360,9 @@ public class Messager {
 		entity.setContentEncoding("UTF-8");    
 		entity.setContentType("application/json");    
 		postRequest.setEntity(entity);
-		System.out.println(postRequest.getRequestLine());
 		
 		try{
-			HttpGet httpget = new HttpGet(url);
-			System.out.println(httpget.getRequestLine());
+			System.out.println(postRequest.getRequestLine());
 			ResponseHandler<String> resHandler = new ResponseHandler<String>(){
 				@Override
 				public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
@@ -330,7 +375,6 @@ public class Messager {
 					}
 				}
 			};
-			result = httpclient.execute(httpget, resHandler);
 			result = httpclient.execute(postRequest, resHandler);
 		}catch(Exception e){
 			e.printStackTrace();

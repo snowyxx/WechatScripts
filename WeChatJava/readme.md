@@ -1,6 +1,6 @@
 ### Usage:
 
-- set ACCOUNTTYPE with one of ["service"  "subscribe"  "enterprise"] in config.properties
+- set ACCOUNTTYPE with one of ["service" "enterprise"] \(could not be  "subscribe" \)in config.properties
 - set up your detail in config.properties
 	- MsgTemplateId:  your template id of OPENTM207112010
 - usage
