@@ -8,6 +8,7 @@
 	- __Service/Subscribe Account__ `java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>`
 		
         > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
+        > __If you change the tag tagname or add/remove users from a tag, del st.properties to get update now. otherwise, it only get updage very 4 hours.__
 
 ---
 
