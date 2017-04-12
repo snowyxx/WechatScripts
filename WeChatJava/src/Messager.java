@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -92,7 +93,7 @@ public class Messager {
 	private String sendMsg_sub(String token, String tagNames, String alarmurl, String severity,
 			String alertType, String alertDate, String device, String monitorGroup, String rcaMessage) throws Exception {
 		
-		ArrayList<String> users = this.fetchServieUserIds(token, tagNames);
+		HashSet<String> users = this.fetchServieUserIds(token, tagNames);
 		StringBuffer result = new StringBuffer();
 		String url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token="+token;
 		String[] critcal = {"critical", "error", "down", "严重", "严重的", "停止", "错误", "服务停止"};
@@ -103,8 +104,7 @@ public class Messager {
 			severityColor = "#FF0000";
 		}
 		System.out.println("[*] Be going to send message to "+users.size()+" users." );
-		for (int i=0; i<users.size(); i++){
-			String user = users.get(i);
+		for (String user : users){
 			JSONObject postdata = new JSONObject();
 			postdata.put("touser", user);
 			postdata.put("url", alarmurl);
@@ -283,7 +283,7 @@ public class Messager {
 		return token;
 	}
 	
-	private ArrayList<String> fetchServieUserIds(String token, String tagNames) throws Exception{
+	private HashSet<String> fetchServieUserIds(String token, String tagNames) throws Exception{
 		Properties prop = new Properties();
 		Long time;
 		String serviceUsers;
@@ -300,7 +300,7 @@ public class Messager {
 					users = new ArrayList<String>();
 					users.add(serviceUsers);
 				}
-				return users;
+				return new HashSet<String>(users);
 			}
 		}catch (Exception e){
 			
@@ -313,14 +313,11 @@ public class Messager {
 			sb.append(users.get(i)+"|");
 		}
 		String unames = sb.toString();
-		if (unames.endsWith("|")){
-			unames = unames.substring(0, unames.length()-1);
-		}
 		time = System.currentTimeMillis();
 		prop.setProperty("serviceUsers", unames);
 		prop.setProperty("serviceUsersUpdateTime", String.valueOf(time));
 		prop.store(new FileOutputStream("st.properties"), "store the new taged name ids");
-		return users;
+		return new HashSet<String>(users);
 	}
 	
 	public static String getRequest(String url) throws Exception{
