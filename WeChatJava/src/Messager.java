@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -35,14 +36,15 @@ public class Messager {
 	public Messager(String file) throws FileNotFoundException, IOException{
 		Properties prop = new Properties();
 		prop.load(new FileInputStream(file));
-		Messager.accountType=prop.getProperty("ACCOUNTTYPE").trim();
-		this.corpid = prop.getProperty("corpid").trim();
-		this.secret = prop.getProperty("secret").trim();
-		this.appid = String.valueOf(prop.get("AGENTID"));
+		Messager.accountType=prop.getProperty("ACCOUNTTYPE", "").trim();
+		this.corpid = prop.getProperty("corpid", "").trim();
+		this.secret = prop.getProperty("secret", "").trim();
+		String id = String.valueOf(prop.get("AGENTID"));
+		this.appid = id!=null?id:"";
 		
-		this.AppID = prop.getProperty("AppID").trim();
-		this.AppSecret = prop.getProperty("AppSecret").trim();
-		this.MsgTemplateId = prop.getProperty("MsgTemplateId").trim();
+		this.AppID = prop.getProperty("AppID", "").trim();
+		this.AppSecret = prop.getProperty("AppSecret", "").trim();
+		this.MsgTemplateId = prop.getProperty("MsgTemplateId", "").trim();
 		System.out.println("[-] New Messager created with account type: " + Messager.accountType);
 	}
 	
@@ -71,11 +73,13 @@ public class Messager {
 			System.out.println("[*] send message to service account result: "+result);
 		}else if("enterprise".equals(accountType)){
 			String toUser = args[0];
-			for (int i=1;i<args.length;i++){
+			String toParty = args[1];
+			String toTag = args[2];
+			for (int i=3;i<args.length;i++){
 				sb.append(args[i]+" ");
 			}
 			String content = sb.toString().trim();
-			String result = msg.sendMsg_ent(token,toUser, content);
+			String result = msg.sendMsg_ent(token, toUser, toParty, toTag, content);
 			System.out.println("[*] send message to enterprise account result: "+result);
 		}else if("subscribe".equals(accountType)){
 			System.out.println("[!] subscribe account type is not supportted.");
@@ -201,7 +205,7 @@ public class Messager {
 			names[0]=tagNames;
 		}
 		List<String> namelist = Arrays.asList(names);
-		System.out.println("[-] get the tag ids of tag names: "+namelist);
+		System.out.println("[-] Going to get the tag ids of tag names: "+namelist);
 		String url = "https://api.weixin.qq.com/cgi-bin/tags/get?access_token="+token;
 		String tagResponse = getRequest(url);
 		System.out.println("[-] Get tage name id API response:\n"+tagResponse);
@@ -218,16 +222,27 @@ public class Messager {
 		}
 		return ids;
 	}
-
-	private String sendMsg_ent(String token, String toUser, String content) throws Exception {
+	
+	//send mssage API: http://qydev.weixin.qq.com/wiki/index.php?title=%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F
+	private String sendMsg_ent(String token, String toUser, String toParty, String toTag, String content) throws Exception {
 		String senMessageUrl = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=";
 		String url = senMessageUrl+token;
+		String toPartyId = "";
+		String toTagId = "";
+		if (! "".equals(toParty)){
+			toPartyId = getPartyIdByName(token, toParty);
+			System.out.println("[-] message will send to department ids: "+ toPartyId);
+		}
+		if (! "".equals(toTag)){
+			toTagId = getTagIdByName(token, toTag);
+			System.out.println("[-] message will send to tag ids: "+ toTagId);
+		}
 		JSONObject data = new JSONObject();
 		JSONObject contentObj = new JSONObject();
 		contentObj.put("content", content);
 		data.put("touser", toUser);
-		data.put("toparty", "");
-		data.put("totag", "");
+		data.put("toparty", toPartyId);
+		data.put("totag", toTagId);
 		data.put("msgtype", "text");
 		data.put("agentid", Integer.valueOf(appid));
 		data.put("text", contentObj);
@@ -237,6 +252,97 @@ public class Messager {
 		String reslut = postRequestWithString(url, dataStr);
 		return reslut;
 	}
+	
+	//get department list API: http://qydev.weixin.qq.com/wiki/index.php?title=%E7%AE%A1%E7%90%86%E9%83%A8%E9%97%A8
+	private String getPartyIdByName(String token, String partyName) {
+		String url = "https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token="+token+"&id=";
+		String ids= ""; // the string to return, it'd like id1|id2|id3 or id1
+		String names[];
+		if (partyName.indexOf("|")!=-1){
+			names = partyName.split("\\|");
+		}else{
+			names = new String[1];
+			names[0]=partyName;
+		}
+		List<String> namelist = new LinkedList<String>(Arrays.asList(names));
+		System.out.println("[-] Be going to get the department ids of department names: "+namelist);
+		String partyListRes = null;
+		try {
+			partyListRes = getRequest(url);
+		} catch (Exception e) {
+			return ids;
+		}
+		System.out.println("[-] get department list API response:\n"+partyListRes);
+		JSONObject jobj = new JSONObject(partyListRes);
+		int errcode =jobj.getInt("errcode");
+		String errmsg =jobj.getString("errmsg");
+		if (0 != errcode){
+			System.out.println("[!] Can not get department list from Wechat: "+errmsg);
+			return ids;
+		}
+		JSONArray partyArray = jobj.getJSONArray("department");
+		Iterator<Object> iterator = partyArray.iterator();
+		while (iterator.hasNext()){
+			if(! "".equals(ids)){ids+="|";}
+			JSONObject ob = (JSONObject) iterator.next();
+			String name = ob.getString("name");
+			String id = String.valueOf(ob.getInt("id"));
+			if (namelist.contains(name)){
+				ids+=id;
+				namelist.remove(name);
+			}
+		}
+		if (namelist.size()>0){
+			System.out.println("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
+		}
+		return ids;
+	}
+	
+	//get tag list API: http://qydev.weixin.qq.com/wiki/index.php?title=%E7%AE%A1%E7%90%86%E6%A0%87%E7%AD%BE
+	private String getTagIdByName(String token, String tagName) {
+		String url = "https://qyapi.weixin.qq.com/cgi-bin/tag/list?access_token="+token;
+		String ids=""; // the string to return, it'd like id1|id2|id3 or id1
+		String names[];
+		if (tagName.indexOf("|")!=-1){
+			names = tagName.split("\\|");
+		}else{
+			names = new String[1];
+			names[0]=tagName;
+		}
+		List<String> namelist = new LinkedList<String>(Arrays.asList(names));
+		System.out.println("[-] Be going to get the tag ids of department names: "+namelist);
+		String tagListRes = null;
+		try {
+			tagListRes = getRequest(url);
+		} catch (Exception e) {
+			return ids;
+		}
+		System.out.println("[-] get department list API response:\n"+tagListRes);
+		JSONObject jobj = new JSONObject(tagListRes);
+		int errcode =jobj.getInt("errcode");
+		String errmsg =jobj.getString("errmsg");
+		if (0 !=errcode){
+			System.out.println("[!] Can not get tag list from Wechat: "+errmsg);
+			return ids;
+		}
+		JSONArray partyArray = jobj.getJSONArray("taglist");
+		Iterator<Object> iterator = partyArray.iterator();
+		while (iterator.hasNext()){
+			if(! "".equals(ids)){ids+="|";}
+			JSONObject ob = (JSONObject) iterator.next();
+			String name = ob.getString("tagname");
+			String id = String.valueOf(ob.getInt("tagid"));
+			if (namelist.contains(name)){
+				ids+=id;
+				namelist.remove(name);
+			}
+		}
+		if (namelist.size()>0){
+			System.out.println("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
+		}
+		return ids;
+	}
+
 	private String fetchToken() throws Exception{
 		Properties prop = new Properties();
 		String token;
@@ -339,6 +445,8 @@ public class Messager {
 				}
 			};
 			result = httpclient.execute(httpget, resHandler);
+		}catch(java.net.UnknownHostException ne){
+			System.out.println("[!] Can not connet to WeChat API serever. Please check your internet connection.");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -373,6 +481,8 @@ public class Messager {
 				}
 			};
 			result = httpclient.execute(postRequest, resHandler);
+		}catch(java.net.UnknownHostException ne){
+			System.out.println("[!] Can not connet to WeChat API serever. Please check your internet connection.");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
