@@ -3,14 +3,20 @@
 - set ACCOUNTTYPE with one of ["service" "enterprise"] \(could not be  "subscribe" \)in config.properties
 - set up your detail in conf.properties
 	- **MsgTemplateId**:  your template id of OPENTM207112010
-- usage
-	- __Enterprise Account__ `java -cp .;lib/* Messager <@all> <departmentNames> <tagNames> <Your [orther messga]>`
+- command:
+	- __Enterprise Account__ 
+    
+        `java -cp .;lib/* Messager <@all> <departmentNames> <tagNames> <Your [orther messga]>`
         
         > <@all> : to all users associted to this application. If it secified, followed departmentNames and tagNames will not work, otherwise, just give "".
+        
         > departmentNames : "departmentname" or "departmentename1|departmentname2|departmentname3". 
+        
         > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
     
-	- __Service/Subscribe Account__ `java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>`
+	- __Service/Subscribe Account__ 
+    
+        `java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>`
 		
         > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
         
