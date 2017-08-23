@@ -10,3 +10,9 @@
 
 - 微信开发的一些笔记 <http://xiaoxuenotes.com/blog/2016/10/21/wechat-tips.html>
 - web.py+apache的微信公众号服务器 <http://xiaoxuenotes.com/blog/2016/08/09/wechat-server-python.html>
+
+
+### related video
+
+- https://pan.baidu.com/s/1gflARGR
+- https://v.qq.com/x/page/e052186znfd.html
