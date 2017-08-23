@@ -2,7 +2,7 @@
 
 scripts for weixin actions
 
-Support send message to Enterprise, Service and Subscribe account.
+Support send message to Enterprise and Service account.
 
 Setup config.properties(Java) and Config.py(Python) first.
 
