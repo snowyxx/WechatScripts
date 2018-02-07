@@ -14,14 +14,14 @@
         
         > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
     
-	- __Service/Subscribe Account__ 
+	- __Service Account__ 
     
         `java -cp .;lib/* Messager <tagNames> <alarmurl> <severity> <alertType> <alertDate> <device> <monitorGroup> <Your [orther messga]>`
 		
         > tagNames : "tagname" or "tagename1|tagname2|tagname3". 
         
-        > __If you change the tag name or add/remove users from a tag, delete st.properties file to get update now. otherwise, it only get updage very 4 hours.__
-
+        > serviceTagedUsersCacheHrs means how many hours to frech taged users. 0 means fresh users whenever this script executed.
+           __If you change the tag name or add/remove users from a tag, delete st.properties file to get update now.__
 ---
 
 JSON lib
