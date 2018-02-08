@@ -33,18 +33,21 @@ public class Messager {
 	String AppID;
 	String AppSecret;
 	String MsgTemplateId;
+	int serviceTagedUsersCacheHrs = 0; // to reduce api calling to avoid api call count expire
 	public Messager(String file) throws FileNotFoundException, IOException{
 		Properties prop = new Properties();
 		prop.load(new FileInputStream(file));
 		Messager.accountType=prop.getProperty("ACCOUNTTYPE", "").trim();
-		this.corpid = prop.getProperty("corpid", "").trim();
-		this.secret = prop.getProperty("secret", "").trim();
+		corpid = prop.getProperty("corpid", "").trim();
+		secret = prop.getProperty("secret", "").trim();
 		String id = String.valueOf(prop.get("AGENTID"));
-		this.appid = id!=null?id:"";
+		appid = id!=null?id:"";
 		
-		this.AppID = prop.getProperty("AppID", "").trim();
-		this.AppSecret = prop.getProperty("AppSecret", "").trim();
-		this.MsgTemplateId = prop.getProperty("MsgTemplateId", "").trim();
+		AppID = prop.getProperty("AppID", "").trim();
+		AppSecret = prop.getProperty("AppSecret", "").trim();
+		MsgTemplateId = prop.getProperty("MsgTemplateId", "").trim();
+		
+		serviceTagedUsersCacheHrs = Integer.parseInt(prop.getProperty("serviceTagedUsersCacheHrs", "").trim());
 		System.out.println("[-] New Messager created with account type: " + Messager.accountType);
 	}
 	
@@ -97,7 +100,7 @@ public class Messager {
 	private String sendMsg_sub(String token, String tagNames, String alarmurl, String severity,
 			String alertType, String alertDate, String device, String monitorGroup, String rcaMessage) throws Exception {
 		
-		HashSet<String> users = this.fetchServieUserIds(token, tagNames);
+		HashSet<String> users = fetchServieUserIds(token, tagNames);
 		StringBuffer result = new StringBuffer();
 		String url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token="+token;
 		String[] critcal = {"critical", "error", "down", "严重", "严重的", "停止", "错误", "服务停止"};
@@ -398,7 +401,7 @@ public class Messager {
 			prop.load(new FileInputStream("st.properties"));
 			serviceUsers = prop.getProperty("serviceUsers");
 			time = Long.valueOf(prop.getProperty("serviceUsersUpdateTime"));
-			if (System.currentTimeMillis()/1000 < (time/1000+3600*4)){
+			if (System.currentTimeMillis()/1000 < (time/1000+3600*serviceTagedUsersCacheHrs)){
 				if (serviceUsers.indexOf("|")!=-1){
 					String[] ss = serviceUsers.split("\\|");
 					users = new ArrayList<String>(Arrays.asList(ss));
@@ -412,8 +415,8 @@ public class Messager {
 			
 		}
 		
-		ArrayList<Integer> ids = this.getTagIds(token, tagNames);
-		users = this.getUsers(token,ids);
+		ArrayList<Integer> ids = getTagIds(token, tagNames);
+		users = getUsers(token,ids);
 		StringBuffer sb = new StringBuffer();
 		for(int i=0;i<users.size();i++){
 			sb.append(users.get(i)+"|");
