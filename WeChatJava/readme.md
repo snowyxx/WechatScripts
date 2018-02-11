@@ -23,7 +23,7 @@
         > serviceTagedUsersCacheHrs means how many hours to frech taged users. 0 means fresh users whenever this script executed.
            __If you change the tag name or add/remove users from a tag, delete st.properties file to get update now.__
 
-- use `<br>` or `\n` for line separator
+- use `<br>` or `\n` for line separator in your message to be sent.
 
 ---
 
