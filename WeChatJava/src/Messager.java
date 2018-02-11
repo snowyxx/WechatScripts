@@ -46,8 +46,11 @@ public class Messager {
 		AppID = prop.getProperty("AppID", "").trim();
 		AppSecret = prop.getProperty("AppSecret", "").trim();
 		MsgTemplateId = prop.getProperty("MsgTemplateId", "").trim();
+		try {
+			serviceTagedUsersCacheHrs = Integer.parseInt(prop.getProperty("serviceTagedUsersCacheHrs", "").trim());
+		} catch (Exception e) {
+		}
 		
-		serviceTagedUsersCacheHrs = Integer.parseInt(prop.getProperty("serviceTagedUsersCacheHrs", "").trim());
 		System.out.println("[-] New Messager created with account type: " + Messager.accountType);
 	}
 	
@@ -157,6 +160,7 @@ public class Messager {
 			postdata.put("data", data);
 			
 			String datastr = postdata.toString();
+			datastr=datastr.replaceAll("<br>", "\n").replaceAll("\\\\\\\\n", "\n");
 			System.out.println("[-] message template post data is \n"+datastr);
 			result.append(postRequestWithString(url, datastr));
 		}
@@ -242,6 +246,7 @@ public class Messager {
 		}
 		JSONObject data = new JSONObject();
 		JSONObject contentObj = new JSONObject();
+		System.out.println(content);
 		contentObj.put("content", content);
 		data.put("touser", toUser);
 		data.put("toparty", toPartyId);
@@ -250,9 +255,11 @@ public class Messager {
 		data.put("agentid", Integer.valueOf(appid));
 		data.put("text", contentObj);
 		data.put("safe",0);
+		
 		String dataStr = data.toString();
+		dataStr=dataStr.replaceAll("<br>", "\n").replaceAll("\\\\\\\\n", "\n");
 		System.out.println("[-] Enterprise account message sending post data:\n"+dataStr);
-		String reslut = postRequestWithString(url, dataStr);
+		String reslut =postRequestWithString(url, dataStr);
 		return reslut;
 	}
 	
