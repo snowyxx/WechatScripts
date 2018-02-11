@@ -160,7 +160,7 @@ public class Messager {
 			postdata.put("data", data);
 			
 			String datastr = postdata.toString();
-			datastr=datastr.replaceAll("<br>", "\n").replaceAll("\\\\\\\\n", "\n");
+			datastr=datastr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
 			System.out.println("[-] message template post data is \n"+datastr);
 			result.append(postRequestWithString(url, datastr));
 		}
@@ -257,7 +257,7 @@ public class Messager {
 		data.put("safe",0);
 		
 		String dataStr = data.toString();
-		dataStr=dataStr.replaceAll("<br>", "\n").replaceAll("\\\\\\\\n", "\n");
+		dataStr=dataStr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
 		System.out.println("[-] Enterprise account message sending post data:\n"+dataStr);
 		String reslut =postRequestWithString(url, dataStr);
 		return reslut;
