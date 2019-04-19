@@ -20,10 +20,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Messager {
+	private static Logger myLog = Logger.getLogger(Messager.class);
 	static String accountType;
 	
 	String corpid;
@@ -50,17 +52,20 @@ public class Messager {
 			serviceTagedUsersCacheHrs = Integer.parseInt(prop.getProperty("serviceTagedUsersCacheHrs", "").trim());
 		} catch (Exception e) {
 		}
-		
-		System.out.println("[-] New Messager created with account type: " + Messager.accountType);
+		myLog.info("[-] New Messager created with account type: " + Messager.accountType);
 	}
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length<2){
-			System.out.println("[!] Your input was not correct. Please check the readme");
+			myLog.info("[!] Your input was not correct. Please check the readme");
 			System.exit(999);
 		}
 		Messager msg = new Messager("conf.properties");
 		String token = msg.fetchToken();
+		if (token == null){
+			myLog.info("!!!! Can not fetch token, exiting!!!");
+			return;
+		}
 		StringBuffer sb = new StringBuffer();
 		if ("service".equals(accountType)){
 			String tagNames = args[0];
@@ -76,7 +81,7 @@ public class Messager {
 			String rcaMessage = sb.toString().trim();
 			
 			String result = msg.sendMsg_sub(token,tagNames, alarmurl,severity,alertType,alertDate,device,monitorGroup,rcaMessage);
-			System.out.println("[*] send message to service account result: "+result);
+			myLog.info("[*] send message to service account result: "+result);
 		}else if("enterprise".equals(accountType)){
 			String toUser = args[0];
 			String toParty = args[1];
@@ -86,11 +91,11 @@ public class Messager {
 			}
 			String content = sb.toString().trim();
 			String result = msg.sendMsg_ent(token, toUser, toParty, toTag, content);
-			System.out.println("[*] send message to enterprise account result: "+result);
+			myLog.info("[*] send message to enterprise account result: "+result);
 		}else if("subscribe".equals(accountType)){
-			System.out.println("[!] subscribe account type is not supportted.");
+			myLog.info("[!] subscribe account type is not supportted.");
 		}else{
-			System.out.println("[!] Your account type is not correct. It should be one of service, enterprise");
+			myLog.info("[!] Your account type is not correct. It should be one of service, enterprise");
 		}
 	}
 	
@@ -113,7 +118,7 @@ public class Messager {
 		if (Arrays.asList(critcal).contains(severity.toLowerCase())){
 			severityColor = "#FF0000";
 		}
-		System.out.println("[*] Be going to send message to "+users.size()+" users." );
+		myLog.info("[*] Be going to send message to "+users.size()+" users." );
 		for (String user : users){
 			JSONObject postdata = new JSONObject();
 			postdata.put("touser", user);
@@ -161,7 +166,7 @@ public class Messager {
 			
 			String datastr = postdata.toString();
 			datastr=datastr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
-			System.out.println("[-] message template post data is \n"+datastr);
+			myLog.info("[-] message template post data is \n"+datastr);
 			result.append(postRequestWithString(url, datastr));
 		}
 
@@ -182,7 +187,7 @@ public class Messager {
     		postdata.put("next_openid", "");
     		String data = postdata.toString();
     		String postResponse = postRequestWithString(url, data);
-    		System.out.println("[-] get taged users API response is:\n"+postResponse);
+    		myLog.info("[-] get taged users API response is:\n"+postResponse);
     		// {"count":2,"data":{"openid":["osQhiuOAGCM96q6e8gAkTFpHf_60","osQhiuHgVRrK5ciDxVvk17OEU66Q"]},"next_openid":"osQhiuHgVRrK5ciDxVvk17OEU66Q"}
     		JSONObject resobj = new JSONObject(postResponse);
     		JSONObject dataobj = (JSONObject) resobj.get("data");
@@ -212,10 +217,10 @@ public class Messager {
 			names[0]=tagNames;
 		}
 		List<String> namelist = Arrays.asList(names);
-		System.out.println("[-] Going to get the tag ids of tag names: "+namelist);
+		myLog.info("[-] Going to get the tag ids of tag names: "+namelist);
 		String url = "https://api.weixin.qq.com/cgi-bin/tags/get?access_token="+token;
 		String tagResponse = getRequest(url);
-		System.out.println("[-] Get tage name id API response:\n"+tagResponse);
+		myLog.info("[-] Get tage name id API response:\n"+tagResponse);
 		JSONObject jobj = new JSONObject(tagResponse);
 		//{"tags":[{"id":2,"name":"星标组","count":0},{"id":100,"name":"ME测试","count":1},{"id":102,"name":"ME支持","count":0}]}
 		JSONArray tagArray = jobj.getJSONArray("tags");
@@ -238,15 +243,15 @@ public class Messager {
 		String toTagId = "";
 		if (! "".equals(toParty)){
 			toPartyId = getPartyIdByName(token, toParty);
-			System.out.println("[-] message will send to department ids: "+ toPartyId);
+			myLog.info("[-] message will send to department ids: "+ toPartyId);
 		}
 		if (! "".equals(toTag)){
 			toTagId = getTagIdByName(token, toTag);
-			System.out.println("[-] message will send to tag ids: "+ toTagId);
+			myLog.info("[-] message will send to tag ids: "+ toTagId);
 		}
 		JSONObject data = new JSONObject();
 		JSONObject contentObj = new JSONObject();
-		System.out.println(content);
+		myLog.info(content);
 		contentObj.put("content", content);
 		data.put("touser", toUser);
 		data.put("toparty", toPartyId);
@@ -258,7 +263,7 @@ public class Messager {
 		
 		String dataStr = data.toString();
 		dataStr=dataStr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
-		System.out.println("[-] Enterprise account message sending post data:\n"+dataStr);
+		myLog.info("[-] Enterprise account message sending post data:\n"+dataStr);
 		String reslut =postRequestWithString(url, dataStr);
 		return reslut;
 	}
@@ -275,19 +280,19 @@ public class Messager {
 			names[0]=partyName;
 		}
 		List<String> namelist = new LinkedList<String>(Arrays.asList(names));
-		System.out.println("[-] Be going to get the department ids of department names: "+namelist);
+		myLog.info("[-] Be going to get the department ids of department names: "+namelist);
 		String partyListRes = null;
 		try {
 			partyListRes = getRequest(url);
 		} catch (Exception e) {
 			return ids;
 		}
-		System.out.println("[-] get department list API response:\n"+partyListRes);
+		myLog.info("[-] get department list API response:\n"+partyListRes);
 		JSONObject jobj = new JSONObject(partyListRes);
 		int errcode =jobj.getInt("errcode");
 		String errmsg =jobj.getString("errmsg");
 		if (0 != errcode){
-			System.out.println("[!] Can not get department list from Wechat: "+errmsg);
+			myLog.info("[!] Can not get department list from Wechat: "+errmsg);
 			return ids;
 		}
 		JSONArray partyArray = jobj.getJSONArray("department");
@@ -303,7 +308,7 @@ public class Messager {
 			}
 		}
 		if (namelist.size()>0){
-			System.out.println("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
+			myLog.info("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
 		}
 		return ids;
 	}
@@ -320,19 +325,19 @@ public class Messager {
 			names[0]=tagName;
 		}
 		List<String> namelist = new LinkedList<String>(Arrays.asList(names));
-		System.out.println("[-] Be going to get the tag ids of department names: "+namelist);
+		myLog.info("[-] Be going to get the tag ids of department names: "+namelist);
 		String tagListRes = null;
 		try {
 			tagListRes = getRequest(url);
 		} catch (Exception e) {
 			return ids;
 		}
-		System.out.println("[-] get department list API response:\n"+tagListRes);
+		myLog.info("[-] get department list API response:\n"+tagListRes);
 		JSONObject jobj = new JSONObject(tagListRes);
 		int errcode =jobj.getInt("errcode");
 		String errmsg =jobj.getString("errmsg");
 		if (0 !=errcode){
-			System.out.println("[!] Can not get tag list from Wechat: "+errmsg);
+			myLog.info("[!] Can not get tag list from Wechat: "+errmsg);
 			return ids;
 		}
 		JSONArray partyArray = jobj.getJSONArray("taglist");
@@ -348,7 +353,7 @@ public class Messager {
 			}
 		}
 		if (namelist.size()>0){
-			System.out.println("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
+			myLog.info("[!] Can not get id for: "+namelist+". Please check if it associated to you application or not!!!");
 		}
 		return ids;
 	}
@@ -357,6 +362,8 @@ public class Messager {
 		Properties prop = new Properties();
 		String token;
 		int expires;
+		int errcode;
+		String errmsg;
 		Long time;
 		String url = null;
 		try{
@@ -375,7 +382,7 @@ public class Messager {
 		}else if ("service".equalsIgnoreCase(accountType) ||  "subscribe".equalsIgnoreCase(accountType) && (corpid != null) && (secret != null)){
 			url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+AppID+"&secret="+AppSecret;
 		}else{
-			System.out.println("[!] Your account type is not correct. It should be one of service, subscribe,enterprise");
+			myLog.info("[!] Your account type is not correct. It should be one of service, subscribe,enterprise");
 			return null;
 		}
 		String getTokenRes;
@@ -386,8 +393,14 @@ public class Messager {
 		} catch (Exception e1) {
 			return null;
 		}
-		System.out.println("[-] get token API response:\n"+getTokenRes);
+		myLog.info("[-] get token API response:\n"+getTokenRes);
 		JSONObject jobj = new JSONObject(getTokenRes);
+		errcode = jobj.getInt("errcode");
+		if (errcode > 0){
+			errmsg = jobj.getString("errmsg");
+			myLog.info("!!!!ERROR!!!! " + errmsg);
+			return null;
+		}
 		token =jobj.getString("access_token");
 		expires =jobj.getInt("expires_in");
 		time = System.currentTimeMillis();
@@ -441,7 +454,7 @@ public class Messager {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		try{
 			HttpGet httpget = new HttpGet(url);
-			System.out.println(httpget.getRequestLine());
+			myLog.info(httpget.getRequestLine());
 			ResponseHandler<String> resHandler = new ResponseHandler<String>(){
 				@Override
 				public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
@@ -456,7 +469,7 @@ public class Messager {
 			};
 			result = httpclient.execute(httpget, resHandler);
 		}catch(java.net.UnknownHostException ne){
-			System.out.println("[!] Can not connet to WeChat API serever. Please check your internet connection.");
+			myLog.info("[!] Can not connet to WeChat API serever. Please check your internet connection.");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -477,7 +490,7 @@ public class Messager {
 		postRequest.setEntity(entity);
 		
 		try{
-			System.out.println(postRequest.getRequestLine());
+			myLog.info(postRequest.getRequestLine());
 			ResponseHandler<String> resHandler = new ResponseHandler<String>(){
 				@Override
 				public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
@@ -492,7 +505,7 @@ public class Messager {
 			};
 			result = httpclient.execute(postRequest, resHandler);
 		}catch(java.net.UnknownHostException ne){
-			System.out.println("[!] Can not connet to WeChat API serever. Please check your internet connection.");
+			myLog.info("[!] Can not connet to WeChat API serever. Please check your internet connection.");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
