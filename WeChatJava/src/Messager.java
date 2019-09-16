@@ -165,7 +165,7 @@ public class Messager {
 			postdata.put("data", data);
 			
 			String datastr = postdata.toString();
-			datastr=datastr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
+			// datastr=datastr.replaceAll("<\\s*(br|BR)[\\s/]*?>", "\n").replaceAll("\\\\\\\\n", "\n");
 			myLog.info("[-] message template post data is \n"+datastr);
 			result.append(postRequestWithString(url, datastr));
 		}
