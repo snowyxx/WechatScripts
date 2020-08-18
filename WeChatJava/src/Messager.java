@@ -223,6 +223,19 @@ public class Messager {
 		myLog.info("[-] Get tage name id API response:\n"+tagResponse);
 		JSONObject jobj = new JSONObject(tagResponse);
 		//{"tags":[{"id":2,"name":"星标组","count":0},{"id":100,"name":"ME测试","count":1},{"id":102,"name":"ME支持","count":0}]}
+		
+		//fix for error 48001, unaurhed service account can not use the template message
+		//{"errcode":48001, "errmsg":"api unauthorized rid: xxxxxxxx"}
+		//https://developers.weixin.qq.com/doc/offiaccount/Getting_Started/Explanation_of_interface_privileges.html
+		//https://developers.weixin.qq.com/doc/offiaccount/Getting_Started/Global_Return_Code.html
+		if (jobj.has("errcode")){
+			int errcode = jobj.getInt("errcode");
+			if (errcode == 48001) {
+				System.out.println("Please check if your service account get authorized in the admin console!!!!");
+			}
+			return null;
+		}
+		
 		JSONArray tagArray = jobj.getJSONArray("tags");
 		Iterator<Object> iterator = tagArray.iterator();
 		while (iterator.hasNext()){
